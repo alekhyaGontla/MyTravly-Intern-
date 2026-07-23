@@ -1,0 +1,16 @@
+{
+    "testCases": [
+        {
+            "name": "Search hotel in Bangalore",
+            "location": "Bangalore"
+        },
+        {
+            "name": "Search hotel in Hyderabad",
+            "location": "Hyderabad"
+        },
+        {
+            "name": "Search hotel in Chennai",
+            "location": "Chennai"
+        }
+    ]
+}
