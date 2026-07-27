@@ -4,5 +4,4 @@ test-results/
 reports/
 screenshots/
 .env
-pages/CheckoutPage.js
-tests/checkout.spec.js
+.DS_Store
