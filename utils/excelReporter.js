@@ -44,7 +44,13 @@ class ExcelReporter {
             const statusCell = row.getCell(9); // Column I is Status
             const actualResultCell = row.getCell(8); // Column H is Actual Result
 
-            // Update Status
+            // Update Status and ensure 'Skipped' is available in the dropdown list
+            statusCell.dataValidation = {
+              type: 'list',
+              allowBlank: true,
+              formulae: ['"Pass,Fail,Skipped,Not Executed,Blocked"']
+            };
+
             if (testResult.status === 'passed') {
               statusCell.value = 'Pass';
               statusCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC6EFCE' } };
@@ -52,7 +58,7 @@ class ExcelReporter {
               statusCell.value = 'Fail';
               statusCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFC7CE' } };
             } else if (testResult.status === 'skipped') {
-              statusCell.value = 'Not Executed';
+              statusCell.value = 'Skipped';
               statusCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFEB9C' } };
             }
 
@@ -62,7 +68,7 @@ class ExcelReporter {
             } else if (testResult.status === 'passed') {
               actualResultCell.value = 'Executed via Automation: Passed successfully.';
             } else if (testResult.status === 'skipped') {
-              actualResultCell.value = 'Skipped / Fixme: See code for reason.';
+              actualResultCell.value = 'Skipped via Automation: Test execution skipped per user instructions.';
             }
             
             row.commit();

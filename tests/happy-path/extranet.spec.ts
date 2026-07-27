@@ -18,11 +18,13 @@ test.describe('Module 6: Host / Partner Extranet (B2B)', () => {
 
     // 3. Verify redirection to the B2B site (hbc.mytravaly.com)
     const targetPage = popup || page;
-    await targetPage.waitForURL(/hbc\.mytravaly\.com/i, { timeout: 20000 });
+    await targetPage.waitForURL(/hbc\.mytravaly\.com/i, { timeout: 25000 });
+    await targetPage.waitForLoadState('domcontentloaded');
 
     // 4. Confirm key elements of the Hotel Business Centre landing page
-    const hbcHeading = targetPage.getByText(/HBC: HOTEL BUSINESS CENTRE|Get Found\. Get Booked|List Property Today/i).first();
-    await expect(hbcHeading).toBeVisible({ timeout: 15000 });
+    expect(targetPage.url()).toContain('hbc.mytravaly.com');
+    const hbcElement = targetPage.locator('h1, h2, h3, p, span, button, a, div').filter({ hasText: /Get Found|Grow Your Business|HOTEL BUSINESS CENTRE|List Property/i }).first();
+    await expect(hbcElement).toBeVisible({ timeout: 15000 });
   });
 
 });

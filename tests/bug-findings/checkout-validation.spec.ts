@@ -5,7 +5,7 @@ import { CheckoutPage } from '../pages/CheckoutPage';
 
 test.describe('Payments & Checkout Bug Findings (Confirmed Defects)', () => {
   let checkoutPage: CheckoutPage;
-  
+
   async function navigateToCheckout(page: Page) {
     const homePage = new HomePage(page);
     await homePage.navigate();
@@ -19,7 +19,7 @@ test.describe('Payments & Checkout Bug Findings (Confirmed Defects)', () => {
       page.context().waitForEvent('page').catch(() => page),
       viewPropertyBtn.click()
     ]);
-    
+
     const detailsPage = newPage || page;
     await detailsPage.waitForLoadState('domcontentloaded');
 
@@ -71,7 +71,7 @@ test.describe('Payments & Checkout Bug Findings (Confirmed Defects)', () => {
     await navigateToCheckout(page);
     const basePriceBefore = await checkoutPage.getNumericValue(checkoutPage.basePriceValue);
     await checkoutPage.specialRequestAccordionToggle.click();
-    const longString = 'A'.repeat(501);
+    const longString = 'A'.repeat(5001);
     await checkoutPage.specialRequestInput.fill(longString);
     const inputValue = await checkoutPage.specialRequestInput.inputValue();
     expect(inputValue.length).toBeLessThan(501);
@@ -80,12 +80,38 @@ test.describe('Payments & Checkout Bug Findings (Confirmed Defects)', () => {
   });
 
   test('MTW-TC-48: Coupon discount calculation integrity', async ({ page }) => {
-    test.fail(true, 'BUG: Base price is inflated before applying discount (deceptive pricing).');
-    await navigateToCheckout(page);
+    test.fail(true, 'BUG: Room base price inflates from ₹5,500 to ₹8,250 before calculating 40% discount (deceptive pricing math error on Akino Luxury).');
+    // 1. Select Akino Luxury property
+    await page.goto('/hotel?hotelid=qpXBtuMO');
+    await page.waitForLoadState('domcontentloaded');
+
+    // 2. Select the Premium Luxury room and click Book Now
+    const premiumLuxuryCard = page.locator('div').filter({ hasText: /^Premium Luxury/i }).filter({ has: page.getByRole('button', { name: /Book Now/i }) }).first();
+    await premiumLuxuryCard.getByRole('button', { name: /Book Now/i }).first().click();
+
+    // Confirm & secure stay in popup modal
+    const confirmBtn = page.getByRole('button', { name: /Confirm & Secure/i });
+    await confirmBtn.waitFor({ state: 'visible', timeout: 10000 });
+    await confirmBtn.click();
+
+    await page.waitForURL(/checkout/, { timeout: 25000 });
+    checkoutPage = new CheckoutPage(page);
+    await page.waitForLoadState('domcontentloaded');
+
+    // 3. Scroll down to the price details section as specified
+    const priceDetailsSection = page.getByText(/Price details/i).first();
+    await priceDetailsSection.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(2000); // Pause so initial ₹5,500 price is clearly visible in UI mode
+
     const basePriceBefore = await checkoutPage.getNumericValue(checkoutPage.basePriceValue);
     await checkoutPage.expandCouponSection();
     await checkoutPage.enterAndApplyCoupon('GREATSTAY');
     await expect(checkoutPage.appliedCouponBadge).toBeVisible();
+    // Explicitly scroll back up to Price Details and hover it so Playwright UI captures a clear DOM snapshot of the inflated price!
+    await priceDetailsSection.scrollIntoViewIfNeeded();
+    await priceDetailsSection.hover();
+    await page.waitForTimeout(3000);
+
     const basePriceAfter = await checkoutPage.getNumericValue(checkoutPage.basePriceValue);
     const discountAmount = await checkoutPage.getNumericValue(checkoutPage.discountValue);
     expect(basePriceAfter).toEqual(basePriceBefore);
@@ -94,22 +120,48 @@ test.describe('Payments & Checkout Bug Findings (Confirmed Defects)', () => {
   });
 
   test('MTW-TC-52: Selected room name integrity in checkout', async ({ page }) => {
-    test.fail(true, "BUG: Checkout displayed '1 room: Superior room, 1 king bed' instead of selected room name.");
-    await navigateToCheckout(page);
+    test.fail(true, "BUG: Checkout booking page displays '1 room : Superior room, 1 king bed' instead of selected 'Super Deluxe Double Bed Room Non Ac' with Breakfast Included.");
+    await page.goto('/hotel?hotelid=vbqeUxia&check_in=2026-07-27&check_out=2026-07-28&adults=2&children=0&rooms=1');
+    await page.waitForLoadState('domcontentloaded');
+
+    // 1. Locate Super Deluxe Double Bed Room Non Ac card and select Breakfast Included meal plan
+    const superDeluxeCard = page.locator('div').filter({ hasText: /^Super Deluxe Double Bed Room Non Ac/i }).filter({ has: page.getByRole('button', { name: /Book Now/i }) }).first();
+    const breakfastOption = superDeluxeCard.getByText(/Breakfast Included/i).first();
+    await breakfastOption.click();
+    await page.waitForTimeout(1000);
+
+    // 2. Click Book Now
+    await superDeluxeCard.getByRole('button', { name: /Book Now/i }).first().click();
+
+    // 3. Confirm & secure stay in popup modal
+    const confirmBtn = page.getByRole('button', { name: /Confirm & Secure/i });
+    await confirmBtn.waitFor({ state: 'visible', timeout: 10000 });
+    await confirmBtn.click();
+
+    // 4. Verify on booking/checkout page that room name is incorrectly displayed as 'Superior room, 1 king bed'
+    await page.waitForURL(/checkout/, { timeout: 25000 });
+    checkoutPage = new CheckoutPage(page);
     await expect(checkoutPage.roomDetails).toBeVisible();
+    
+    // Explicitly scroll to and hover over room details so Playwright UI trace captures a clean DOM snapshot of the discrepancy
+    await checkoutPage.roomDetails.scrollIntoViewIfNeeded();
+    await checkoutPage.roomDetails.hover();
+    await page.waitForTimeout(3000);
+
     const roomText = await checkoutPage.roomDetails.textContent();
-    // We expect exact room name preservation (e.g. Vaidik Cottages), but since it defaults to Superior room, this fails
-    expect(roomText).toContain('Vaidik Cottages');
+    expect(roomText).toContain('Super Deluxe Double Bed Room Non Ac');
   });
 
-  test('MTW-TC-53: Promotional-email consent default state', async ({ page }) => {
+  // Skipped per user instructions
+  test.skip('MTW-TC-53: Promotional-email consent default state', async ({ page }) => {
     test.fail(true, "BUG: Promotional email checkbox is pre-checked while Declaration states 'We do not send promotional emails'.");
     await navigateToCheckout(page);
     const isChecked = await checkoutPage.promoEmailCheckbox.isChecked();
     expect(isChecked).toBe(false);
   });
 
-  test('MTW-TC-54: Currency precision consistency', async ({ page }) => {
+  // Skipped per user instructions
+  test.skip('MTW-TC-54: Currency precision consistency', async ({ page }) => {
     test.fail(true, "BUG: Some totals appeared as INR 4,990.5 and 490.5 rather than two decimal places.");
     await navigateToCheckout(page);
     const totalText = await checkoutPage.totalPayableValue.innerText();

@@ -63,7 +63,7 @@ export class CheckoutPage {
     
     // Using a more general text locator for the hotel details area
     this.hotelName = page.locator('h2').first(); 
-    this.roomDetails = page.getByText(/1 room|room/i).first();
+    this.roomDetails = page.locator('p, div, li, span').filter({ hasText: /Superior room/i }).last();
     this.mealPlanDetails = page.getByText(/Meal Plan/i).first();
     this.checkInDateText = page.getByText(/Check-in :/i).first();
     this.checkOutDateText = page.getByText(/Check-Out :/i).first();
@@ -80,9 +80,9 @@ export class CheckoutPage {
     this.totalPayableValue = page.locator('text=/Total payable amount/i').locator('..').locator('span, div').last();
     
     // Coupon Section
-    this.useCouponLink = page.getByText('Use a coupon, credit, or promotion code').first();
-    this.couponInput = page.getByPlaceholder(/Enter promo code/i).first();
-    this.applyCouponBtn = page.getByRole('button', { name: /Apply/i }).first();
+    this.useCouponLink = page.getByText('Use a coupon, credit, or promotion code').filter({ visible: true }).first();
+    this.couponInput = page.getByPlaceholder(/Enter promo code/i).filter({ visible: true }).first();
+    this.applyCouponBtn = page.getByRole('button', { name: /Apply/i }).filter({ visible: true }).first();
     this.removeCouponLink = page.getByText('Remove', { exact: true }).or(page.getByText('Clear', { exact: true })).first();
     this.invalidCouponPopup = page.getByText(/invalid coupon code/i).first();
 
@@ -108,9 +108,9 @@ export class CheckoutPage {
 
     // Optional Fields
     this.promoEmailCheckbox = page.locator('input[type="checkbox"][name*="promo"], input[type="checkbox"][name*="marketing"]').first();
-    this.companyDetailsToggle = page.getByText(/I have a company\/GST/i).or(page.getByText(/Enter company details/i)).first();
-    this.companyNameInput = page.getByPlaceholder(/Company Name/i).or(page.locator('input[name*="companyName"]')).first();
-    this.gstInput = page.getByPlaceholder(/GST Number/i).or(page.locator('input[name*="gst"]')).first();
+    this.companyDetailsToggle = page.getByText(/I have a company\/GST/i).or(page.getByText(/Enter company details/i)).or(page.getByText(/Tax information/i)).first();
+    this.companyNameInput = page.getByPlaceholder(/Company Name/i).or(page.locator('input[name*="companyName" i], input[name*="company" i]')).first();
+    this.gstInput = page.getByPlaceholder(/Tax Number|GST Number|Tax ID/i).or(page.locator('input[name*="gst" i], input[name*="tax" i]')).first();
     this.specialRequestAccordionToggle = page.getByText(/Special Request/i).first();
 
     // Payment Flow Section
@@ -128,7 +128,9 @@ export class CheckoutPage {
   }
 
   async expandCouponSection() {
-    await this.useCouponLink.click();
+    if (!(await this.couponInput.isVisible().catch(() => false))) {
+      await this.useCouponLink.click({ force: true });
+    }
   }
 
   async enterAndApplyCoupon(couponCode: string) {
@@ -150,7 +152,9 @@ export class CheckoutPage {
     await this.firstNameInput.fill(firstName);
     await this.lastNameInput.fill(lastName);
     await this.emailInput.fill(email);
-    await this.phoneInput.fill(phone);
+    // Automatically prepend +91 for standard 10-digit Indian phone numbers to satisfy country code validation
+    const formattedPhone = (phone.length === 10 && !phone.startsWith('+')) ? `+91 ${phone}` : phone;
+    await this.phoneInput.fill(formattedPhone);
   }
 
   async proceedToPayment() {

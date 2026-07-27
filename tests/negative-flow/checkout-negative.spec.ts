@@ -33,17 +33,25 @@ test.describe('Payments & Checkout Negative Flow', () => {
   }
 
   test('MTW-TC-32: Failed / timed-out payment handling', async ({ page }) => {
+    // Accelerate React 1-second countdown timer by 100x so the 10-minute session timeout expires in ~6 seconds
+    await page.addInitScript(() => {
+      const origSetInterval = window.setInterval;
+      window.setInterval = function (callback, delay, ...args) {
+        if (delay === 1000) {
+          return origSetInterval(callback, 10, ...args);
+        }
+        return origSetInterval(callback, delay, ...args);
+      };
+    });
+
     const checkoutContextPage = await navigateToCheckout(page);
     await checkoutPage.fillGuestDetails('Test', 'User', 'test@example.com', '9839283028');
     await checkoutPage.proceedToPayment();
     await expect(checkoutPage.step3Heading).toBeVisible();
-    
-    const payNowBtn = checkoutContextPage.getByRole('button', { name: /Pay Now|Complete Booking/i }).first();
-    if (await payNowBtn.isVisible()) {
-      await payNowBtn.click();
-      const paymentError = checkoutContextPage.locator('.payment-error, .error-message').first();
-      await expect(paymentError).toBeVisible();
-    }
+
+    // Verify Session Timeout modal and Return to Room Selection button appear as the accelerated timer hits 0:00 (Screenshot 1)
+    const returnToRoomBtn = page.getByRole('button', { name: /Return to Room Selection/i }).or(page.getByText(/Session Timeout/i)).first();
+    await expect(returnToRoomBtn).toBeVisible({ timeout: 15000 });
   });
 
   test('MTW-TC-34: Invalid mobile number rejection', async ({ page }) => {
@@ -63,10 +71,18 @@ test.describe('Payments & Checkout Negative Flow', () => {
 
   test('MTW-TC-35: Optional company / GST fields', async ({ page }) => {
     await navigateToCheckout(page);
-    await expect(checkoutPage.companyNameInput).not.toBeVisible();
+    await checkoutPage.fillGuestDetails('Test', 'User', 'test@example.com', '9839283028');
+    
+    // Check optional company details toggle and verify inputs appear
     await checkoutPage.companyDetailsToggle.click();
     await expect(checkoutPage.companyNameInput).toBeVisible();
     await expect(checkoutPage.gstInput).toBeVisible();
+
+    // Leave optional Tax Number and Company Name blank and proceed to payment
+    await checkoutPage.proceedToPayment();
+    
+    // Verify checkout is not blocked and successfully reaches Step 3 (Payment Methods)
+    await expect(checkoutPage.step3Heading).toBeVisible({ timeout: 15000 });
   });
 
   test('MTW-TC-36: Return from cancelled or failed payment', async ({ page }) => {

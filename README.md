@@ -58,10 +58,11 @@ This project features a custom persistent reporter (`utils/excelReporter.js`) de
 Every time you run the test suites (via CLI or UI mode):
 1. **Persistent Accumulation:** The reporter checks if `test-data/QA_Test_Cases_Results.xlsx` already exists on disk. If so, it accumulates and updates new results without wiping out previously executed test suites from other files!
 2. **Column Correlating:** It maps each test using the Test ID (`MTW-TC-01`, `BLOG-SCN-02`, etc.) in **Column D** (and Scenario TID in Column A) to automatically update **Column I (Status)** and **Column H (Actual Result)**.
-3. **Visual Formatting:**
+3. **Visual Formatting & Data Validation:**
    - **Pass:** Highlighted in solid Green 🟢 with automated execution confirmation.
-   - **Fail:** Highlighted in solid Red 🔴 with the exact error message and line number.
-   - **Not Executed:** Highlighted in solid Yellow 🟡 for baseline and skipped tests.
+   - **Fail:** Highlighted in solid Red 🔴 with the exact error message and line number (confirming live bugs).
+   - **Skipped:** Highlighted in solid Yellow 🟡 for tests skipped per user instructions or environment limitations.
+   - **Data Validation Dropdowns:** Every Status cell in Column I is automatically configured with a spreadsheet data validation dropdown list (`Pass`, `Fail`, `Skipped`, `Not Executed`, `Blocked`) for seamless manual overrides and QA auditing across Excel and Apple Numbers.
 4. **Git-Tracked Report:** Unlike standard temporary test artifacts, `test-data/QA_Test_Cases_Results.xlsx` is explicitly tracked in Git so that both teammates and project reviewers can download and inspect the latest spreadsheet directly from GitHub!
 
 ## Production Safety
