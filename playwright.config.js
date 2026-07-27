@@ -3,7 +3,7 @@ const { defineConfig, devices } = require('@playwright/test');
 
 module.exports = defineConfig({
   testDir: './tests',
-  fullyParallel: true,
+  fullyParallel: false, // Disabled for safety on production
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 2 : undefined,
@@ -11,11 +11,12 @@ module.exports = defineConfig({
   
   reporter: [
     ['list'],
-    ['html', { open: 'never' }]
+    ['html', { open: 'never' }],
+    ['./utils/excelReporter.js']
   ],
   
   use: {
-    baseURL: 'https://mytravaly.in',
+    baseURL: 'https://www.mytravaly.in',
     headless: true,
     actionTimeout: 10000,
     navigationTimeout: 15000,
@@ -27,16 +28,14 @@ module.exports = defineConfig({
 
   projects: [
     {
-      name: 'chromium',
+      name: 'Anshuman (Your Tests)',
+      testMatch: '**/*.spec.ts',
       use: { ...devices['Desktop Chrome'] },
     },
     {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-    },
-    {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
+      name: 'Alekhya (Her Tests)',
+      testMatch: '**/*.spec.js',
+      use: { ...devices['Desktop Chrome'] },
     },
   ],
 });
