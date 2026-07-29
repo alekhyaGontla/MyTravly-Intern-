@@ -36,12 +36,12 @@ test.describe('Payments & Checkout Negative Flow', () => {
     // Accelerate React 1-second countdown timer by 100x so the 10-minute session timeout expires in ~6 seconds
     await page.addInitScript(() => {
       const origSetInterval = window.setInterval;
-      window.setInterval = function (callback, delay, ...args) {
+      window.setInterval = (function (callback: any, delay: any, ...args: any[]) {
         if (delay === 1000) {
           return origSetInterval(callback, 10, ...args);
         }
         return origSetInterval(callback, delay, ...args);
-      };
+      }) as any;
     });
 
     const checkoutContextPage = await navigateToCheckout(page);

@@ -16,7 +16,9 @@ class ExcelReporter {
       const testId = match[1];
       this.results.set(testId, {
         status: result.status, // "passed", "failed", "timedOut", "skipped"
-        error: result.error ? result.error.message.split('\n')[0].substring(0, 500) : ''
+        error: result.error ? result.error.message.split('\n')[0].substring(0, 500) : '',
+        duration: result.duration,
+        executionDate: new Date().toLocaleString()
       });
     }
   }
@@ -69,6 +71,17 @@ class ExcelReporter {
               actualResultCell.value = 'Executed via Automation: Passed successfully.';
             } else if (testResult.status === 'skipped') {
               actualResultCell.value = 'Skipped via Automation: Test execution skipped per user instructions.';
+            }
+            
+            // Append Execution Metrics to Columns 13 (Duration), 14 (Execution Date), 15 (Error)
+            if (testResult.duration !== undefined) {
+              row.getCell(13).value = `${testResult.duration} ms`;
+            }
+            if (testResult.executionDate) {
+              row.getCell(14).value = testResult.executionDate;
+            }
+            if (testResult.error) {
+              row.getCell(15).value = testResult.error;
             }
             
             row.commit();

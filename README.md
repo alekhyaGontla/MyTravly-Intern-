@@ -57,7 +57,7 @@ This project features a custom persistent reporter (`utils/excelReporter.js`) de
 
 Every time you run the test suites (via CLI or UI mode):
 1. **Persistent Accumulation:** The reporter checks if `test-data/QA_Test_Cases_Results.xlsx` already exists on disk. If so, it accumulates and updates new results without wiping out previously executed test suites from other files!
-2. **Column Correlating:** It maps each test using the Test ID (`MTW-TC-01`, `BLOG-SCN-02`, etc.) in **Column D** (and Scenario TID in Column A) to automatically update **Column I (Status)** and **Column H (Actual Result)**.
+2. **Column Correlating:** It maps each test using the Test ID (`MTW-TC-01`, `BLOG-SCN-02`, etc.) in **Column D** (and Scenario TID in Column A) to automatically update **Column I (Status)** and **Column H (Actual Result)**, as well as automatically appending execution metrics like **Duration**, **Execution Date**, and **Error Details** to columns M, N, and O.
 3. **Visual Formatting & Data Validation:**
    - **Pass:** Highlighted in solid Green 🟢 with automated execution confirmation.
    - **Fail:** Highlighted in solid Red 🔴 with the exact error message and line number (confirming live bugs).
