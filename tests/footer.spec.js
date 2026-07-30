@@ -130,4 +130,32 @@ test.describe('TS_08: Comprehensive Footer Validation', () => {
             await expect(footerPage.page).toHaveURL(/.*privacy-policy/i, { timeout: 15000 });
         }
     });
+    test('MTW-EXT-03: Verify Newsletter Subscription', async ({ page }) => {
+
+    await page.goto('https://mytravaly.com');
+
+    await page.locator('input[type="email"]').last().fill('test@example.com');
+
+    await page.locator('button:has-text("Subscribe")').click();
+
+    await expect(
+        page.locator('text=Thank you')
+    ).toBeVisible();
+});
+test('MTW-EXT-04: Verify Footer Social Links', async ({ page }) => {
+
+    await page.goto('https://mytravaly.com');
+
+    const links = page.locator('footer a');
+
+    const count = await links.count();
+
+    for (let i = 0; i < count; i++) {
+
+        const href = await links.nth(i).getAttribute('href');
+
+        expect(href).not.toBeNull();
+        expect(href).toContain('http');
+    }
+});
 });
